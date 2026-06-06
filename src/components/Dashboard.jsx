@@ -248,159 +248,56 @@ export default function Dashboard({
           </button>
         </div>
 
-        {/* WIDGET 2: PIE CHART */}
-        <div
-          className="widget-card"
-          style={{ display: 'flex', flexDirection: 'column' }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'flex-start',
-              marginBottom: '1rem',
-            }}
-          >
+                {/* WIDGET 2: PIE CHART (VERSION HP FRIENDLY) */}
+                <div className="widget-card" style={{ display: 'flex', flexDirection: 'column' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
             <h2 className="widget-title" style={{ margin: 0 }}>
-              <PieIcon size={20} color="var(--sky-blue)" /> Distribusi
-              Pendapatan
+              <PieIcon size={20} color="var(--sky-blue)" /> Distribusi Pendapatan
             </h2>
           </div>
-          <div
-            style={{
-              display: 'flex',
-              gap: '1rem',
-              flex: 1,
-              alignItems: 'center',
-            }}
-          >
-            <div
-              style={{
-                flex: 1,
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-              }}
-            >
-              <h3
-                style={{
-                  fontSize: '0.85rem',
-                  color: 'var(--text-gray)',
-                  marginBottom: '0.5rem',
-                  fontWeight: '500',
-                }}
-              >
-                Bulan Lalu
-              </h3>
+          
+          {/* VERSI HP: TAMPILAN BERTUMPUK (VERTIKAL) */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            {/* Bulan Lalu */}
+            <div style={{ textAlign: 'center' }}>
+              <h3 style={{ fontSize: '0.85rem', color: 'var(--text-gray)', marginBottom: '0.5rem', fontWeight: '500' }}>Bulan Lalu</h3>
               {pieDataLastMonth.length === 0 ? (
-                <div
-                  style={{
-                    height: '120px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    color: '#cbd5e1',
-                    fontSize: '0.8rem',
-                  }}
-                >
-                  Rp 0
-                </div>
+                <div style={{ padding: '1rem', textAlign: 'center', color: '#cbd5e1', fontSize: '0.8rem' }}>Rp 0</div>
               ) : (
-                <div style={{ width: '100%', height: 120 }}>
-                  <ResponsiveContainer width="100%" height={300}>
+                <div style={{ width: '100%', maxWidth: '280px', margin: '0 auto', height: 'auto' }}>
+                  <ResponsiveContainer width="100%" height={180}>
                     <PieChart>
-                      <Pie
-                        data={pieDataLastMonth}
-                        innerRadius={30}
-                        outerRadius={50}
-                        paddingAngle={2}
-                        dataKey="value"
-                      >
-                        {pieDataLastMonth.map((e, i) => (
-                          <Cell key={i} fill={e.color} />
-                        ))}
+                      <Pie data={pieDataLastMonth} innerRadius={40} outerRadius={70} paddingAngle={2} dataKey="value">
+                        {pieDataLastMonth.map((e, i) => <Cell key={i} fill={e.color} />)}
                       </Pie>
-                      <RechartsTooltip
-                        formatter={(val) => `Rp${val.toLocaleString('id-ID')}`}
-                      />
+                      <RechartsTooltip formatter={(val) => `Rp${val.toLocaleString('id-ID')}`} />
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
               )}
             </div>
-            <div
-              style={{ width: '1px', height: '80%', background: '#f1f5f9' }}
-            ></div>
-            <div
-              style={{
-                flex: 1,
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-              }}
-            >
-              <h3
-                style={{
-                  fontSize: '0.85rem',
-                  color: 'var(--text-dark)',
-                  marginBottom: '0.5rem',
-                  fontWeight: '600',
-                }}
-              >
-                Bulan Ini
-              </h3>
+
+            {/* Bulan Ini */}
+            <div style={{ textAlign: 'center' }}>
+              <h3 style={{ fontSize: '0.85rem', color: 'var(--text-dark)', marginBottom: '0.5rem', fontWeight: '600' }}>Bulan Ini</h3>
               {pieDataThisMonth.length === 0 ? (
-                <div
-                  style={{
-                    height: '120px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    color: '#cbd5e1',
-                    fontSize: '0.8rem',
-                  }}
-                >
-                  Belum ada data
-                </div>
+                <div style={{ padding: '1rem', textAlign: 'center', color: '#cbd5e1', fontSize: '0.8rem' }}>Belum ada data</div>
               ) : (
-                <div style={{ width: '100%', height: 120 }}>
-                  <ResponsiveContainer width="100%" height={300}>
+                <div style={{ width: '100%', maxWidth: '280px', margin: '0 auto', height: 'auto' }}>
+                  <ResponsiveContainer width="100%" height={180}>
                     <PieChart>
-                      <Pie
-                        data={pieDataThisMonth}
-                        innerRadius={35}
-                        outerRadius={55}
-                        paddingAngle={2}
-                        dataKey="value"
-                      >
-                        {pieDataThisMonth.map((e, i) => (
-                          <Cell key={i} fill={e.color} />
-                        ))}
+                      <Pie data={pieDataThisMonth} innerRadius={40} outerRadius={70} paddingAngle={2} dataKey="value">
+                        {pieDataThisMonth.map((e, i) => <Cell key={i} fill={e.color} />)}
                       </Pie>
-                      <RechartsTooltip
-                        formatter={(val) => `Rp${val.toLocaleString('id-ID')}`}
-                      />
+                      <RechartsTooltip formatter={(val) => `Rp${val.toLocaleString('id-ID')}`} />
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
               )}
             </div>
           </div>
-          <button
-            onClick={() => setShowYearModal(true)}
-            style={{
-              marginTop: '1.5rem',
-              padding: '0.75rem',
-              background: '#f8fafc',
-              border: '1px solid #e2e8f0',
-              borderRadius: '6px',
-              color: 'var(--text-dark)',
-              cursor: 'pointer',
-              fontWeight: '600',
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              gap: '0.5rem',
-            }}
-          >
+
+          <button onClick={() => setShowYearModal(true)} style={{ marginTop: '1.5rem', padding: '0.75rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '6px', color: 'var(--text-dark)', cursor: 'pointer', fontWeight: '600', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem' }}>
             <Calendar size={16} color="var(--sky-blue)" /> Lihat Rekap Tahunan
           </button>
         </div>
