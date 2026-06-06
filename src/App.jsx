@@ -1,3 +1,4 @@
+import Admin from './components/Admin';
 import React, { useState, useEffect } from 'react';
 import { auth, database } from './firebaseConfig';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
@@ -128,6 +129,9 @@ export default function App() {
   }
   
   const renderContent = () => {
+    if (activeTab === 'admin' && user.email === 'fikriarkan1309@gmail.com') {
+      return <Admin />;
+    }
     if (activeTab === 'dashboard') {
       return (
         <Dashboard
@@ -187,6 +191,7 @@ export default function App() {
         isOpen={isSidebarOpen}
         setIsOpen={setIsSidebarOpen}
         onAddProject={handleAddProject}
+        userEmail={user.email}
       />
       <main className="main-content">{renderContent()}</main>
 

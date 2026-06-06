@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Home, FolderKanban, Settings, Menu, Plus, Shield } from 'lucide-react';
+import { Home, Settings, Menu, Plus, Shield } from 'lucide-react';
 
 export default function Sidebar({
   activeTab,
@@ -29,7 +29,7 @@ export default function Sidebar({
       id: `p${Date.now()}`,
       name: newProject.name || 'Proyek Baru',
       color: newProject.color,
-      columns: ['To-Do', 'In Progress', 'Waiting / Revision', 'Done'], // Bawaan tahapan
+      columns: ['To-Do', 'In Progress', 'Waiting / Revision', 'Slesai'], // Bawaan tahapan
     };
     onAddProject(projectToAdd);
     setIsModalOpen(false);
@@ -221,18 +221,17 @@ export default function Sidebar({
         </nav>
 
         <div style={{ padding: '1rem' }}>
+          
+          {/* TOMBOL ADMIN */}
           {userEmail === 'fikriarkan1309@gmail.com' && (
             <button 
-              onClick={() => { 
-                setActiveTab('admin'); 
-                setActiveProjectId(null); 
-                if (window.innerWidth <= 768) setIsOpen(false); // Tutup sidebar di HP
-              }} 
+              onClick={() => handleMenuClick(() => { setActiveTab('admin'); setActiveProjectId(null); })} 
               style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '1rem', padding: isOpen ? '0.75rem 1rem' : '0.75rem 0', justifyContent: isOpen ? 'flex-start' : 'center', background: activeTab === 'admin' ? 'rgba(255,255,255,0.2)' : 'transparent', border: 'none', borderRadius: '8px', color: 'white', cursor: 'pointer', marginBottom: '0.5rem' }}
             >
               <Shield size={22} /> {isOpen && <span>Admin Panel</span>}
             </button>
           )}
+
           <button
             onClick={() =>
               handleMenuClick(() => {

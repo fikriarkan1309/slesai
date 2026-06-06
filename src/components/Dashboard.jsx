@@ -38,18 +38,18 @@ export default function Dashboard({
   const [showYearModal, setShowYearModal] = useState(false);
   const [selectedYear, setSelectedYear] = useState(currentYear);
 
-  // 1. DATA FOKUS HARI INI (Sembunyikan yang sudah Done atau Diarsipkan)
+  // 1. DATA FOKUS HARI INI (Sembunyikan yang sudah Slesai atau Diarsipkan)
   const starredTasks = tasks.filter(
-    (t) => t.isStarred && t.status !== 'Done' && !t.isArchived
+    (t) => t.isStarred && t.status !== 'Slesai' && !t.isArchived
   );
 
-  // 2. DATA PIE CHART (Hitung status 'Done' ATAU 'isArchived')
+  // 2. DATA PIE CHART (Hitung status 'Slesai' ATAU 'isArchived')
   const generatePieData = (isCurrentMonth) => {
     return projectsList
       .map((proj) => {
         const projTasksDone = tasks.filter(
           (t) =>
-            t.projectId === proj.id && (t.status === 'Done' || t.isArchived)
+            t.projectId === proj.id && (t.status === 'Slesai' || t.isArchived)
         );
         if (!isCurrentMonth)
           return { name: proj.name, value: 0, color: proj.color };
@@ -74,7 +74,7 @@ export default function Dashboard({
   );
   const totalPendapatanRiil = tasks.reduce(
     (sum, t) =>
-      t.status === 'Done' || t.isArchived
+      t.status === 'Slesai' || t.isArchived
         ? sum + (parseInt((t.fee || '0').replace(/[^0-9]/g, '')) || 0)
         : sum,
     0
