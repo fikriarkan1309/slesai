@@ -1,0 +1,16 @@
+{
+    "name": "S'lesai! Workspace",
+    "short_name": "S'lesai",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#38bdf8",
+    "icons": [
+      {
+        "src": "/Logo.png",
+        "sizes": "192x192 512x512",
+        "type": "image/png",
+        "purpose": "any maskable"
+      }
+    ]
+  }

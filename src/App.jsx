@@ -12,6 +12,10 @@ import './index.css';
 export default function App() {
   const [user, setUser] = useState(null);
   const [loadingAuth, setLoadingAuth] = useState(true);
+  
+  // STATE BARU UNTUK APPROVAL
+  const [isApproved, setIsApproved] = useState(false);
+  const [isProfileLoaded, setIsProfileLoaded] = useState(false);
 
   const [activeTab, setActiveTab] = useState('dashboard');
   const [projectsList, setProjectsList] = useState([]);
@@ -20,7 +24,6 @@ export default function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
 
-  // 1. Deteksi Status Koneksi Internet
   useEffect(() => {
     const updateOnlineStatus = () => setIsOnline(navigator.onLine);
     window.addEventListener('online', updateOnlineStatus);
@@ -31,45 +34,46 @@ export default function App() {
     };
   }, []);
 
-  // 2. Sinkronisasi Data Firebase & LocalStorage (Offline-First)
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       setLoadingAuth(false);
 
       if (currentUser) {
+        // CEK STATUS APPROVAL
+        const profileRef = ref(database, `users/${currentUser.uid}/profile`);
+        onValue(profileRef, (snapshot) => {
+          const profileData = snapshot.val();
+          if (profileData && profileData.isApproved) {
+            setIsApproved(true);
+          } else {
+            setIsApproved(false);
+          }
+          setIsProfileLoaded(true);
+        });
+
         const projectsRef = ref(database, `users/${currentUser.uid}/projects`);
         const tasksRef = ref(database, `users/${currentUser.uid}/tasks`);
 
-        // Sinkronisasi data Proyek
         onValue(projectsRef, (snapshot) => {
           const data = snapshot.val();
           if (data) {
             const parsedData = Array.isArray(data) ? data : Object.values(data);
             setProjectsList(parsedData);
-            localStorage.setItem(
-              `projects_${currentUser.uid}`,
-              JSON.stringify(parsedData)
-            );
+            localStorage.setItem(`projects_${currentUser.uid}`, JSON.stringify(parsedData));
           } else {
-            const localData = localStorage.getItem(
-              `projects_${currentUser.uid}`
-            );
+            const localData = localStorage.getItem(`projects_${currentUser.uid}`);
             if (localData) setProjectsList(JSON.parse(localData));
             else setProjectsList([]);
           }
         });
 
-        // Sinkronisasi data Tugas
         onValue(tasksRef, (snapshot) => {
           const data = snapshot.val();
           if (data) {
             const parsedData = Array.isArray(data) ? data : Object.values(data);
             setTasks(parsedData);
-            localStorage.setItem(
-              `tasks_${currentUser.uid}`,
-              JSON.stringify(parsedData)
-            );
+            localStorage.setItem(`tasks_${currentUser.uid}`, JSON.stringify(parsedData));
           } else {
             const localData = localStorage.getItem(`tasks_${currentUser.uid}`);
             if (localData) setTasks(JSON.parse(localData));
@@ -79,20 +83,16 @@ export default function App() {
       } else {
         setProjectsList([]);
         setTasks([]);
+        setIsApproved(false);
+        setIsProfileLoaded(false);
       }
     });
 
     return () => unsubscribeAuth();
   }, []);
 
-  // 3. Fungsi Aksi Pengiriman Data ke Cloud
-  const syncProjectsToFirebase = (newProjects) => {
-    if (user) set(ref(database, `users/${user.uid}/projects`), newProjects);
-  };
-
-  const syncTasksToFirebase = (newTasks) => {
-    if (user) set(ref(database, `users/${user.uid}/tasks`), newTasks);
-  };
+  const syncProjectsToFirebase = (newProjects) => { if (user) set(ref(database, `users/${user.uid}/projects`), newProjects); };
+  const syncTasksToFirebase = (newTasks) => { if (user) set(ref(database, `users/${user.uid}/tasks`), newTasks); };
 
   const handleAddProject = (newProject) => {
     const updatedProjects = [...projectsList, newProject];
@@ -102,35 +102,31 @@ export default function App() {
   };
 
   const handleUpdateProject = (updatedProject) => {
-    const newProjects = projectsList.map((p) =>
-      p.id === updatedProject.id ? updatedProject : p
-    );
+    const newProjects = projectsList.map(p => p.id === updatedProject.id ? updatedProject : p);
     syncProjectsToFirebase(newProjects);
   };
 
-  const handleLogout = () => {
-    signOut(auth);
-  };
+  const handleLogout = () => signOut(auth);
 
-  if (loadingAuth) {
+  // --- LAYAR PENGHALANG ---
+  if (loadingAuth) return <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Memuat S'lesai...</div>;
+  if (!user) return <Auth />;
+  if (!isProfileLoaded) return <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Memverifikasi akses...</div>;
+  
+  // JIKA LOGIN TAPI BELUM DI-ACC
+  if (!isApproved) {
     return (
-      <div
-        style={{
-          height: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        Memuat S'lesai...
+      <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-light)', padding: '1rem', textAlign: 'center' }}>
+        <img src="/Logo.png" alt="S'lesai Logo" style={{ width: '80px', height: '80px', objectFit: 'contain', marginBottom: '1.5rem' }} />
+        <h2 style={{ marginBottom: '0.5rem', color: 'var(--text-dark)' }}>Akun Menunggu Persetujuan</h2>
+        <p style={{ color: 'var(--text-gray)', marginBottom: '2rem', maxWidth: '400px', lineHeight: '1.6' }}>
+          Akun dengan email <strong>{user.email}</strong> berhasil didaftarkan, namun belum memiliki akses masuk. Silakan hubungi Admin untuk persetujuan.
+        </p>
+        <button onClick={handleLogout} className="btn-secondary" style={{ width: 'auto', padding: '0.75rem 2rem' }}>Kembali ke Login</button>
       </div>
     );
   }
-
-  if (!user) {
-    return <Auth />;
-  }
-
+  
   const renderContent = () => {
     if (activeTab === 'dashboard') {
       return (
