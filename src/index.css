@@ -286,3 +286,47 @@ body {
     gap: 0 !important;
   }
 }
+
+/* ===== PERBAIKAN DASHBOARD UNTUK HP ===== */
+@media (max-width: 768px) {
+  /* Biar widget bisa di-scroll horizontal */
+  .widget-card {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    width: 100% !important;
+  }
+  
+  /* Biar chart nggak kepotong */
+  .recharts-wrapper {
+    min-width: 350px !important;
+  }
+  
+  /* Atur ulang grid dashboard */
+  .dashboard-grid {
+    display: block !important;
+    padding: 0 8px !important;
+  }
+  
+  /* Setiap widget jadi full width & ada jarak */
+  .widget-card {
+    margin-bottom: 16px !important;
+    width: 100% !important;
+  }
+  
+  /* Judul page biar nggak keciL banget */
+  .page-title {
+    font-size: 1.2rem !important;
+    padding: 0 12px !important;
+  }
+}
+
+/* Untuk HP super kecil (max width 480px) */
+@media (max-width: 480px) {
+  .recharts-wrapper {
+    min-width: 280px !important;
+  }
+  
+  .widget-title {
+    font-size: 0.9rem !important;
+  }
+}

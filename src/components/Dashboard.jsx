@@ -37,54 +37,54 @@ export default function Dashboard({
 
   const [showYearModal, setShowYearModal] = useState(false);
   const [selectedYear, setSelectedYear] = useState(currentYear);
-
+  const [chartView, setChartView] = useState('overall');
+  const getLastStage = (projectId) => {
+    const proj = projectsList.find(p => p.id === projectId);
+    return proj && proj.columns && proj.columns.length > 0 ? proj.columns[proj.columns.length - 1] : 'Slesai';
+  };
+  
   // 1. DATA FOKUS HARI INI (Sembunyikan yang sudah Slesai atau Diarsipkan)
-  const starredTasks = tasks.filter(
-    (t) => t.isStarred && t.status !== 'Slesai' && !t.isArchived
-  );
+  const starredTasks = tasks.filter(t => t.isStarred && t.status !== getLastStage(t.projectId) && !t.isArchived);
 
   // 2. DATA PIE CHART (Hitung status 'Slesai' ATAU 'isArchived')
   const generatePieData = (isCurrentMonth) => {
-    return projectsList
-      .map((proj) => {
-        const projTasksDone = tasks.filter(
-          (t) =>
-            t.projectId === proj.id && (t.status === 'Slesai' || t.isArchived)
-        );
-        if (!isCurrentMonth)
-          return { name: proj.name, value: 0, color: proj.color };
+    return projectsList.map(proj => {
+      const lastStage = getLastStage(proj.id);
+      const projTasksDone = tasks.filter(t => t.projectId === proj.id && (t.status === lastStage || t.isArchived));
+      if (!isCurrentMonth) return { name: proj.name, value: 0, color: proj.color };
 
-        const totalRevenue = projTasksDone.reduce(
-          (sum, task) =>
-            sum + (parseInt((task.fee || '0').replace(/[^0-9]/g, '')) || 0),
-          0
-        );
-        return { name: proj.name, value: totalRevenue, color: proj.color };
-      })
-      .filter((data) => data.value > 0);
+      const totalRevenue = projTasksDone.reduce((sum, task) => sum + (parseInt((task.fee || '0').replace(/[^0-9]/g, '')) || 0), 0);
+      return { name: proj.name, value: totalRevenue, color: proj.color };
+    }).filter(data => data.value > 0);
   };
 
   const pieDataThisMonth = generatePieData(true);
   const pieDataLastMonth = generatePieData(false);
 
   // 3. DATA GRAFIK ARUS KAS
-  const totalPotensiSemua = tasks.reduce(
-    (sum, t) => sum + (parseInt((t.fee || '0').replace(/[^0-9]/g, '')) || 0),
-    0
-  );
-  const totalPendapatanRiil = tasks.reduce(
-    (sum, t) =>
-      t.status === 'Slesai' || t.isArchived
-        ? sum + (parseInt((t.fee || '0').replace(/[^0-9]/g, '')) || 0)
-        : sum,
-    0
-  );
+  const totalPotensiSemua = tasks.reduce((sum, t) => sum + (parseInt((t.fee || '0').replace(/[^0-9]/g, '')) || 0), 0);
+  const totalPendapatanRiil = tasks.reduce((sum, t) => {
+    const lastStage = getLastStage(t.projectId);
+    return (t.status === lastStage || t.isArchived) ? sum + (parseInt((t.fee || '0').replace(/[^0-9]/g, '')) || 0) : sum;
+  }, 0);
 
   const dataMingguan = [
-    { name: 'Mg 1', masuk: 0, potensi: 0 },
-    { name: 'Mg 2', masuk: 0, potensi: 0 },
-    { name: 'Mg 3', masuk: 0, potensi: 0 },
-    { name: 'Mg 4', masuk: totalPendapatanRiil, potensi: totalPotensiSemua },
+    { name: 'Mg 1', masuk: 0, potensi: 0 }, { name: 'Mg 2', masuk: 0, potensi: 0 },
+    { name: 'Mg 3', masuk: 0, potensi: 0 }, { name: 'Mg 4', masuk: totalPendapatanRiil, potensi: totalPotensiSemua }, 
+  ];
+
+  // Data Khusus Grafik Multi-Project
+  let mg4DataMulti = { name: 'Mg 4' };
+  projectsList.forEach(p => {
+    const lastStage = getLastStage(p.id);
+    const projTasks = tasks.filter(t => t.projectId === p.id);
+    const projRev = projTasks.reduce((sum, t) => (t.status === lastStage || t.isArchived) ? sum + (parseInt((t.fee || '0').replace(/[^0-9]/g, '')) || 0) : sum, 0);
+    mg4DataMulti[p.name] = projRev;
+  });
+
+  const emptyProjects = projectsList.reduce((acc, p) => ({ ...acc, [p.name]: 0 }), {});
+  const dataMingguanMulti = [
+    { name: 'Mg 1', ...emptyProjects }, { name: 'Mg 2', ...emptyProjects }, { name: 'Mg 3', ...emptyProjects }, mg4DataMulti
   ];
 
   const namaBulan = [
@@ -120,12 +120,12 @@ export default function Dashboard({
   };
 
   return (
-    <div style={{ paddingBottom: '2rem' }}>
+    <div style={{ paddingBottom: '2rem', minWidth: 0, overflow: 'hidden' }}>
       <h1 className="page-title">
         Dashboard Overview - {currentMonthName} {currentYear}
       </h1>
 
-      <div className="dashboard-grid">
+      <div className="dashboard-grid" style={{ minWidth: 0 }}>
         {/* WIDGET 1: FOKUS HARI INI (Desain Mini & Scrollable) */}
         <div
           className="widget-card"
@@ -306,7 +306,7 @@ export default function Dashboard({
                 </div>
               ) : (
                 <div style={{ width: '100%', height: 120 }}>
-                  <ResponsiveContainer>
+                  <ResponsiveContainer width="100%" height={300}>
                     <PieChart>
                       <Pie
                         data={pieDataLastMonth}
@@ -362,7 +362,7 @@ export default function Dashboard({
                 </div>
               ) : (
                 <div style={{ width: '100%', height: 120 }}>
-                  <ResponsiveContainer>
+                  <ResponsiveContainer width="100%" height={300}>
                     <PieChart>
                       <Pie
                         data={pieDataThisMonth}
@@ -406,60 +406,36 @@ export default function Dashboard({
         </div>
 
         {/* WIDGET 3: GRAFIK ARUS KAS MINGGUAN */}
-        <div className="widget-card" style={{ gridColumn: '1 / -1' }}>
-          <h2 className="widget-title">
-            <TrendingUp size={20} color="#10b981" /> Tren Arus Kas Mingguan
-          </h2>
+        
+
+        {/* --- GANTI WIDGET 3 DENGAN INI --- */}
+        <div className="widget-card" style={{ gridColumn: '1 / -1', minWidth: 0, overflow: 'hidden' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
+            <h2 className="widget-title" style={{ margin: 0 }}><TrendingUp size={20} color="#10b981" /> Tren Arus Kas Mingguan</h2>
+            <div style={{ display: 'flex', gap: '0.5rem', background: '#f1f5f9', padding: '4px', borderRadius: '8px' }}>
+              <button onClick={() => setChartView('overall')} style={{ padding: '4px 12px', border: 'none', borderRadius: '4px', background: chartView === 'overall' ? 'white' : 'transparent', boxShadow: chartView === 'overall' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none', cursor: 'pointer', fontSize: '0.85rem', fontWeight: '600', color: chartView === 'overall' ? 'var(--sky-blue)' : 'var(--text-gray)' }}>Keseluruhan</button>
+              <button onClick={() => setChartView('perProject')} style={{ padding: '4px 12px', border: 'none', borderRadius: '4px', background: chartView === 'perProject' ? 'white' : 'transparent', boxShadow: chartView === 'perProject' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none', cursor: 'pointer', fontSize: '0.85rem', fontWeight: '600', color: chartView === 'perProject' ? 'var(--sky-blue)' : 'var(--text-gray)' }}>Per Project</button>
+            </div>
+          </div>
+
           <div style={{ width: '100%', height: 300 }}>
-            <ResponsiveContainer>
-              <LineChart
-                data={dataMingguan}
-                margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-              >
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  vertical={false}
-                  stroke="#f1f5f9"
-                />
-                <XAxis
-                  dataKey="name"
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fill: '#64748b' }}
-                />
-                <YAxis
-                  width={85}
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fill: '#64748b' }}
-                  tickFormatter={(val) => `Rp${val / 1000}k`}
-                />
-                <RechartsTooltip
-                  formatter={(value) => `Rp ${value.toLocaleString('id-ID')}`}
-                  contentStyle={{
-                    borderRadius: '8px',
-                    border: 'none',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                  }}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="masuk"
-                  stroke="var(--sky-blue)"
-                  strokeWidth={3}
-                  dot={{ r: 4 }}
-                  activeDot={{ r: 6 }}
-                  name="Pendapatan Riil"
-                />
-                <Line
-                  type="monotone"
-                  dataKey="potensi"
-                  stroke="#cbd5e1"
-                  strokeWidth={3}
-                  strokeDasharray="6 6"
-                  dot={false}
-                  name="Potensi Total"
-                />
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={chartView === 'overall' ? dataMingguan : dataMingguanMulti} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b'}} />
+                <YAxis width={85} axisLine={false} tickLine={false} tick={{fill: '#64748b'}} tickFormatter={(val) => `Rp${val/1000}k`} />
+                <RechartsTooltip formatter={(value) => `Rp ${(Number(value) || 0).toLocaleString('id-ID')}`} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
+                
+                {chartView === 'overall' ? (
+                  <>
+                    <Line type="monotone" dataKey="masuk" stroke="var(--sky-blue)" strokeWidth={3} dot={{r: 4}} activeDot={{r: 6}} name="Pendapatan Riil" />
+                    <Line type="monotone" dataKey="potensi" stroke="#cbd5e1" strokeWidth={3} strokeDasharray="6 6" dot={false} name="Potensi Total" />
+                  </>
+                ) : (
+                  projectsList.map(proj => (
+                    <Line key={proj.id} type="monotone" dataKey={proj.name} stroke={proj.color} strokeWidth={3} dot={{r: 4}} activeDot={{r: 6}} name={proj.name} />
+                  ))
+                )}
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -525,7 +501,7 @@ export default function Dashboard({
               </button>
             </div>
             <div style={{ width: '100%', height: 350 }}>
-              <ResponsiveContainer>
+              <ResponsiveContainer width="100%" height={300}>
                 <BarChart
                   data={yearlyData}
                   margin={{ top: 20, right: 0, left: 0, bottom: 0 }}
@@ -549,7 +525,7 @@ export default function Dashboard({
                     tickFormatter={(val) => `Rp${val / 1000}k`}
                   />
                   <RechartsTooltip
-                    formatter={(value) => `Rp ${value.toLocaleString('id-ID')}`}
+                    formatter={(value) => `Rp ${(Number(value) || 0).toLocaleString('id-ID')}`}
                     cursor={{ fill: '#f8fafc' }}
                     contentStyle={{
                       borderRadius: '8px',

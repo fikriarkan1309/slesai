@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Home, Settings, Menu, Plus, Shield } from 'lucide-react';
+import { Home, Settings, Menu, Plus, Shield, X } from 'lucide-react';
 
 export default function Sidebar({
   activeTab,

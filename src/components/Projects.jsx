@@ -40,6 +40,24 @@ export default function Projects({
     (task) => task.projectId === projectData.id && !task.isArchived
   );
 
+  const formatDeadlineText = (dateString) => {
+    if (!dateString) return { text: 'Tanpa Tenggat', color: 'inherit', weight: 'normal' };
+    const d = new Date(dateString);
+    if (isNaN(d.getTime())) return { text: dateString, color: 'inherit', weight: 'normal' }; // Fallback teks manual lama
+    
+    const now = new Date();
+    now.setHours(0,0,0,0);
+    const targetDate = new Date(d);
+    targetDate.setHours(0,0,0,0);
+
+    const diff = targetDate - now;
+    const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+    
+    if (days < 0) return { text: `Terlewat ${Math.abs(days)} hari`, color: '#ef4444', weight: '700' };
+    if (days === 0) return { text: 'Hari ini', color: '#f59e0b', weight: '700' };
+    return { text: `${days} hari lagi`, color: 'var(--text-dark)', weight: '500' };
+  };
+
   const startEditColumn = (index, currentName) => {
     setEditingColIndex(index);
     setEditColName(currentName);
@@ -310,7 +328,9 @@ export default function Projects({
 
             {filteredTasks
               .filter((t) => t.status === col)
-              .map((task) => (
+              .map((task) => {
+                const dlData = formatDeadlineText(task.deadline);
+                return ( 
                 <div
                   key={task.id}
                   className="kanban-card"
@@ -379,18 +399,8 @@ export default function Projects({
                   </div>
 
                   <div className="card-footer">
-                    <span
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                        color:
-                          task.deadline === 'Besok' ? '#ef4444' : 'inherit',
-                        fontWeight:
-                          task.deadline === 'Besok' ? '600' : 'normal',
-                      }}
-                    >
-                      <Clock size={14} /> {task.deadline}
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: dlData.color, fontWeight: dlData.weight }}>
+                      <Clock size={14} /> {dlData.text}
                     </span>
                     <div
                       style={{
@@ -452,7 +462,8 @@ export default function Projects({
                     </div>
                   </div>
                 </div>
-              ))}
+              );
+            })}
 
             <button
               onClick={() => openAddModal(col)}
@@ -580,15 +591,7 @@ export default function Projects({
                   <label style={{ fontSize: '0.85rem', fontWeight: '500' }}>
                     Tenggat Waktu
                   </label>
-                  <input
-                    type="text"
-                    className="form-input"
-                    placeholder="Misal: 4 Hari"
-                    value={formData.deadline}
-                    onChange={(e) =>
-                      setFormData({ ...formData, deadline: e.target.value })
-                    }
-                  />
+                  <input type="datetime-local" className="form-input" value={formData.deadline} onChange={e => setFormData({...formData, deadline: e.target.value})} />
                 </div>
                 <div className="form-group" style={{ flex: 1 }}>
                   <label style={{ fontSize: '0.85rem', fontWeight: '500' }}>
