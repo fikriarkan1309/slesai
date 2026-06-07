@@ -8,7 +8,9 @@ import Sidebar from './components/Sidebar';
 import Projects from './components/Projects';
 import Dashboard from './components/Dashboard';
 import Settings from './components/Settings';
+import Invoice from './components/Invoice';
 import './index.css';
+
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -141,6 +143,9 @@ export default function App() {
           setActiveProjectId={setActiveProjectId}
         />
       );
+    }
+    if (activeTab === 'invoice') {
+      return <Invoice />;
     }
     if (activeTab === 'settings') {
       return (

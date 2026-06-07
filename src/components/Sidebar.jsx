@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Home, Settings, Menu, Plus, Shield, X } from 'lucide-react';
+import { Home, Settings, Menu, Plus, Shield, X, FileText } from 'lucide-react';
 
 export default function Sidebar({
   activeTab,
@@ -125,7 +125,7 @@ export default function Sidebar({
           </button>
         </div>
 
-        <nav style={{ flex: 1, padding: '0 1rem', overflowY: 'auto' }}>
+        <nav className="sidebar-nav" style={{ flex: 1, padding: '0 1rem', overflowY: 'auto' }}>
           <button
             onClick={() =>
               handleMenuClick(() => {
@@ -231,6 +231,17 @@ export default function Sidebar({
               <Shield size={22} /> {isOpen && <span>Admin Panel</span>}
             </button>
           )}
+          {/* --- SISIPKAN TOMBOL INI DI SINI --- */}
+          <button 
+            onClick={() => { 
+              setActiveTab('invoice'); 
+              setActiveProjectId(null); 
+              if (window.innerWidth <= 768) setIsOpen(false); 
+            }} 
+            style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '1rem', padding: isOpen ? '0.75rem 1rem' : '0.75rem 0', justifyContent: isOpen ? 'flex-start' : 'center', background: activeTab === 'invoice' ? 'rgba(255,255,255,0.2)' : 'transparent', border: 'none', borderRadius: '8px', color: 'white', cursor: 'pointer', marginBottom: '0.5rem' }}
+          >
+            <FileText size={22} /> {isOpen && <span>Invoice</span>}
+          </button>
 
           <button
             onClick={() =>

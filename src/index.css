@@ -330,3 +330,65 @@ body {
     font-size: 0.9rem !important;
   }
 }
+/* --- 1. CUSTOM SCROLLBAR GLOBAL (Elegan & Tipis) --- */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent; 
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1; 
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8; 
+}
+
+/* --- 2. HIDE SCROLLBAR SIDEBAR (Tetap bisa di-scroll) --- */
+.sidebar-nav {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;  /* IE and Edge */
+}
+.sidebar-nav::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+/* --- 3. RESPONSIVE INVOICE MOBILE --- */
+@media (max-width: 768px) {
+  .print-area {
+    padding: 1rem !important; /* Kurangi jarak kosong di HP */
+  }
+  .inv-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 1rem;
+  }
+  .inv-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1.5rem !important;
+  }
+  .inv-table-wrapper {
+    width: 100%;
+    overflow-x: auto; /* Tabel bisa digeser ke samping di HP */
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+  }
+  .inv-table-wrapper table {
+    min-width: 650px; /* Lebar aman agar kolom tidak tergencet */
+  }
+  .inv-footer {
+    grid-template-columns: 1fr !important;
+    text-align: left !important;
+    gap: 1.5rem !important;
+  }
+  .inv-total {
+    text-align: left !important;
+    border-top: 1px dashed #cbd5e1;
+    padding-top: 1rem;
+  }
+  .inv-ttd {
+    gap: 1rem !important;
+  }
+}
