@@ -9,6 +9,7 @@ import Projects from './components/Projects';
 import Dashboard from './components/Dashboard';
 import Settings from './components/Settings';
 import Invoice from './components/Invoice';
+import Finance from './components/Finance';
 import './index.css';
 
 
@@ -23,6 +24,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [projectsList, setProjectsList] = useState([]);
   const [tasks, setTasks] = useState([]);
+  const [transactions, setTransactions] = useState([]);
   const [activeProjectId, setActiveProjectId] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -57,6 +59,7 @@ export default function App() {
 
         const projectsRef = ref(database, `users/${currentUser.uid}/projects`);
         const tasksRef = ref(database, `users/${currentUser.uid}/tasks`);
+        const trxRef = ref(database, `users/${currentUser.uid}/transactions`);
 
         onValue(projectsRef, (snapshot) => {
           const data = snapshot.val();
@@ -83,6 +86,19 @@ export default function App() {
             else setTasks([]);
           }
         });
+        // Sinkronisasi data Transaksi
+        onValue(trxRef, (snapshot) => {
+          const data = snapshot.val();
+          if (data) {
+            const parsedData = Array.isArray(data) ? data : Object.values(data);
+            setTransactions(parsedData);
+            localStorage.setItem(`trx_${currentUser.uid}`, JSON.stringify(parsedData));
+          } else {
+            const localData = localStorage.getItem(`trx_${currentUser.uid}`);
+            if (localData) setTransactions(JSON.parse(localData));
+            else setTransactions([]);
+          }
+        });
       } else {
         setProjectsList([]);
         setTasks([]);
@@ -96,6 +112,7 @@ export default function App() {
 
   const syncProjectsToFirebase = (newProjects) => { if (user) set(ref(database, `users/${user.uid}/projects`), newProjects); };
   const syncTasksToFirebase = (newTasks) => { if (user) set(ref(database, `users/${user.uid}/tasks`), newTasks); };
+  const syncTrxToFirebase = (newTrx) => { if (user) set(ref(database, `users/${user.uid}/transactions`), newTrx); setTransactions(newTrx); };
 
   const handleAddProject = (newProject) => {
     const updatedProjects = [...projectsList, newProject];
@@ -146,6 +163,9 @@ export default function App() {
     }
     if (activeTab === 'invoice') {
       return <Invoice />;
+    }
+    if (activeTab === 'finance') {
+      return <Finance tasks={tasks} projectsList={projectsList} transactions={transactions} setTransactions={syncTrxToFirebase} />;
     }
     if (activeTab === 'settings') {
       return (

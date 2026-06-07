@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Home, Settings, Menu, Plus, Shield, X, FileText } from 'lucide-react';
+import { Home, Settings, Menu, Plus, Shield, X, Wallet, FileText } from 'lucide-react';
 
 export default function Sidebar({
   activeTab,
@@ -243,6 +243,10 @@ export default function Sidebar({
             <FileText size={22} /> {isOpen && <span>Invoice</span>}
           </button>
 
+          <button onClick={() => handleMenuClick(() => { setActiveTab('finance'); setActiveProjectId(null); })} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '1rem', padding: isOpen ? '0.75rem 1rem' : '0.75rem 0', justifyContent: isOpen ? 'flex-start' : 'center', background: activeTab === 'finance' ? 'rgba(255,255,255,0.2)' : 'transparent', border: 'none', borderRadius: '8px', color: 'white', cursor: 'pointer', marginBottom: '0.5rem' }}>
+            <Wallet size={22} /> {isOpen && <span>Keuangan</span>}
+          </button>
+          
           <button
             onClick={() =>
               handleMenuClick(() => {

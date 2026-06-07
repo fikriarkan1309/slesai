@@ -42,18 +42,24 @@ export default function Dashboard({
     const proj = projectsList.find(p => p.id === projectId);
     return proj && proj.columns && proj.columns.length > 0 ? proj.columns[proj.columns.length - 1] : 'Slesai';
   };
-  
-  // 1. DATA FOKUS HARI INI (Sembunyikan yang sudah Slesai atau Diarsipkan)
+
+  // --- FUNGSI BARU UNTUK BACA PEMASUKAN (POSITIF) & PENGELUARAN (NEGATIF) ---
+  const getFeeNumber = (task) => {
+    const num = parseInt(String(task.fee || '0').replace(/[^0-9]/g, '')) || 0;
+    return task.type === 'expense' ? -num : num;
+  };
+
+  // 1. DATA FOKUS HARI INI
   const starredTasks = tasks.filter(t => t.isStarred && t.status !== getLastStage(t.projectId) && !t.isArchived);
 
-  // 2. DATA PIE CHART (Hitung status 'Slesai' ATAU 'isArchived')
+  // 2. DATA PIE CHART
   const generatePieData = (isCurrentMonth) => {
     return projectsList.map(proj => {
       const lastStage = getLastStage(proj.id);
       const projTasksDone = tasks.filter(t => t.projectId === proj.id && (t.status === lastStage || t.isArchived));
       if (!isCurrentMonth) return { name: proj.name, value: 0, color: proj.color };
 
-      const totalRevenue = projTasksDone.reduce((sum, task) => sum + (parseInt((task.fee || '0').replace(/[^0-9]/g, '')) || 0), 0);
+      const totalRevenue = projTasksDone.reduce((sum, task) => sum + getFeeNumber(task), 0);
       return { name: proj.name, value: totalRevenue, color: proj.color };
     }).filter(data => data.value > 0);
   };
@@ -61,32 +67,37 @@ export default function Dashboard({
   const pieDataThisMonth = generatePieData(true);
   const pieDataLastMonth = generatePieData(false);
 
-  // 3. DATA GRAFIK ARUS KAS
-  const totalPotensiSemua = tasks.reduce((sum, t) => sum + (parseInt((t.fee || '0').replace(/[^0-9]/g, '')) || 0), 0);
+  // 3. DATA GRAFIK ARUS KAS KESELURUHAN
+  const totalPotensiSemua = tasks.reduce((sum, t) => sum + getFeeNumber(t), 0);
   const totalPendapatanRiil = tasks.reduce((sum, t) => {
     const lastStage = getLastStage(t.projectId);
-    return (t.status === lastStage || t.isArchived) ? sum + (parseInt((t.fee || '0').replace(/[^0-9]/g, '')) || 0) : sum;
+    return (t.status === lastStage || t.isArchived) ? sum + getFeeNumber(t) : sum;
   }, 0);
 
   const dataMingguan = [
-    { name: 'Mg 1', masuk: 0, potensi: 0 }, { name: 'Mg 2', masuk: 0, potensi: 0 },
-    { name: 'Mg 3', masuk: 0, potensi: 0 }, { name: 'Mg 4', masuk: totalPendapatanRiil, potensi: totalPotensiSemua }, 
+    { name: 'Mg 1', masuk: 0, potensi: 0 },
+    { name: 'Mg 2', masuk: 0, potensi: 0 },
+    { name: 'Mg 3', masuk: 0, potensi: 0 },
+    { name: 'Mg 4', masuk: totalPendapatanRiil, potensi: totalPotensiSemua }, 
   ];
 
-  // Data Khusus Grafik Multi-Project
+  // 4. DATA GRAFIK ARUS KAS PER PROJECT
   let mg4DataMulti = { name: 'Mg 4' };
   projectsList.forEach(p => {
     const lastStage = getLastStage(p.id);
     const projTasks = tasks.filter(t => t.projectId === p.id);
-    const projRev = projTasks.reduce((sum, t) => (t.status === lastStage || t.isArchived) ? sum + (parseInt((t.fee || '0').replace(/[^0-9]/g, '')) || 0) : sum, 0);
+    const projRev = projTasks.reduce((sum, t) => (t.status === lastStage || t.isArchived) ? sum + getFeeNumber(t) : sum, 0);
     mg4DataMulti[p.name] = projRev;
   });
 
   const emptyProjects = projectsList.reduce((acc, p) => ({ ...acc, [p.name]: 0 }), {});
   const dataMingguanMulti = [
-    { name: 'Mg 1', ...emptyProjects }, { name: 'Mg 2', ...emptyProjects }, { name: 'Mg 3', ...emptyProjects }, mg4DataMulti
+    { name: 'Mg 1', ...emptyProjects },
+    { name: 'Mg 2', ...emptyProjects },
+    { name: 'Mg 3', ...emptyProjects },
+    mg4DataMulti
   ];
-
+  
   const namaBulan = [
     'Jan',
     'Feb',

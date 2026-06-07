@@ -28,13 +28,17 @@ export default function Projects({
   const [editColName, setEditColName] = useState('');
 
   const [formData, setFormData] = useState({
-    title: '',
-    client: '',
-    deadline: '',
-    fee: '',
-    dp: '',
-    linkAset: '',
+    title: '', client: '', deadline: '', fee: '', dp: '', linkAset: '', type: 'income'
   });
+
+  const handleDeleteColumn = (index) => {
+    if (window.confirm("Hapus tahapan ini? Semua tugas di dalamnya akan ikut TERHAPUS permanen!")) {
+      const colToRemove = columns[index];
+      const newCols = columns.filter((_, i) => i !== index);
+      onUpdateProject({ ...projectData, columns: newCols });
+      setTasks(tasks.filter(t => t.projectId === projectData.id ? t.status !== colToRemove : true));
+    }
+  };
 
   const filteredTasks = tasks.filter(
     (task) => task.projectId === projectData.id && !task.isArchived
@@ -134,28 +138,15 @@ export default function Projects({
 
   const openAddModal = (targetColumn = columns[0]) => {
     setEditingTaskId(null);
-    setFormData({
-      title: '',
-      client: '',
-      deadline: '',
-      fee: '',
-      dp: '',
-      linkAset: '',
-      status: targetColumn,
-    });
+    setFormData({ title: '', client: '', deadline: '', fee: '', dp: '', linkAset: '', status: targetColumn, type: 'income' });
     setIsModalOpen(true);
   };
 
   const openEditModal = (task) => {
     setEditingTaskId(task.id);
-    setFormData({
-      title: task.title,
-      client: task.client,
-      deadline: task.deadline,
-      fee: task.fee ? task.fee.replace(/[^0-9]/g, '') : '',
-      dp: task.dpValue || '',
-      linkAset: task.linkAset || '',
-      status: task.status,
+    setFormData({ 
+      title: task.title, client: task.client, deadline: task.deadline, 
+      fee: task.fee ? task.fee.replace(/[^0-9]/g, '') : '', dp: task.dpValue || '', linkAset: task.linkAset || '', status: task.status, type: task.type || 'income'
     });
     setIsModalOpen(true);
   };
@@ -177,39 +168,10 @@ export default function Projects({
         : 0;
 
     if (editingTaskId) {
-      setTasks(
-        tasks.map((t) =>
-          t.id === editingTaskId
-            ? {
-                ...t,
-                title: formData.title,
-                client: formData.client,
-                deadline: formData.deadline,
-                fee: cleanFee,
-                dpValue: dpNumber,
-                dp: dpPercent,
-                linkAset: formData.linkAset,
-                hasLink: formData.linkAset.trim() !== '',
-              }
-            : t
-        )
-      );
+      setTasks(tasks.map(t => t.id === editingTaskId ? { ...t, title: formData.title, client: formData.client, deadline: formData.deadline, fee: cleanFee, dpValue: dpNumber, dp: dpPercent, linkAset: formData.linkAset, hasLink: formData.linkAset.trim() !== '', type: formData.type } : t));
     } else {
       const newTask = {
-        id: Date.now(),
-        projectId: projectData.id,
-        title: formData.title || 'Tugas Tanpa Judul',
-        client: formData.client || '-',
-        deadline: formData.deadline || '-',
-        fee: cleanFee,
-        dpValue: dpNumber,
-        dp: dpPercent,
-        linkAset: formData.linkAset,
-        hasLink: formData.linkAset.trim() !== '',
-        color: projectData.color,
-        status: formData.status,
-        isStarred: false,
-        isArchived: false,
+        id: Date.now(), projectId: projectData.id, title: formData.title || 'Tugas Tanpa Judul', client: formData.client || '-', deadline: formData.deadline || '-', fee: cleanFee, dpValue: dpNumber, dp: dpPercent, linkAset: formData.linkAset, hasLink: formData.linkAset.trim() !== '', color: projectData.color, status: formData.status, isStarred: false, isArchived: false, type: formData.type
       };
       setTasks([...tasks, newTask]);
     }
@@ -311,17 +273,10 @@ export default function Projects({
               ) : (
                 <>
                   <span>{col}</span>
-                  <button
-                    onClick={() => startEditColumn(index, col)}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      cursor: 'pointer',
-                      color: 'var(--text-gray)',
-                    }}
-                  >
-                    <MoreHorizontal size={18} />
-                  </button>
+                  <div style={{ display: 'flex', gap: '4px' }}>
+                    <button onClick={() => { setEditingColIndex(index); setEditColName(col); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-gray)' }}><MoreHorizontal size={18} /></button>
+                    {columns.length > 1 && <button onClick={() => handleDeleteColumn(index)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444' }}><Trash2 size={16} /></button>}
+                  </div>
                 </>
               )}
             </div>
@@ -549,6 +504,18 @@ export default function Projects({
                 </div>
               </div>
 
+              <div className="form-group" style={{ marginBottom: '1rem' }}>
+                <label style={{ fontSize: '0.85rem', fontWeight: '500', display: 'block', marginBottom: '0.5rem' }}>Jenis Arus Kas</label>
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', color: formData.type === 'income' ? '#10b981' : 'var(--text-gray)', fontWeight: '600' }}>
+                    <input type="radio" name="type" checked={formData.type === 'income'} onChange={() => setFormData({...formData, type: 'income'})} /> 💰 Pemasukan
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', color: formData.type === 'expense' ? '#ef4444' : 'var(--text-gray)', fontWeight: '600' }}>
+                    <input type="radio" name="type" checked={formData.type === 'expense'} onChange={() => setFormData({...formData, type: 'expense'})} /> 💸 Pengeluaran
+                  </label>
+                </div>
+              </div>
+              
               <div
                 className="form-row-responsive"
                 style={{ display: 'flex', gap: '1rem' }}
