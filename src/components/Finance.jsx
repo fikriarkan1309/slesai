@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Wallet, ArrowLeftRight, TrendingDown, TrendingUp, Printer, FileSpreadsheet } from 'lucide-react';
+import { Wallet, ArrowLeftRight, TrendingDown, TrendingUp, Printer, FileSpreadsheet, Edit2, Trash2 } from 'lucide-react';
 
 export default function Finance({ tasks, projectsList, transactions, setTransactions }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -8,6 +8,27 @@ export default function Finance({ tasks, projectsList, transactions, setTransact
   const [filterMonth, setFilterMonth] = useState('all');
   const [filterProject, setFilterProject] = useState('all');
   const [filterType, setFilterType] = useState('all'); // State baru untuk filter Pemasukan/Pengeluaran
+  const [editingTrxId, setEditingTrxId] = useState(null);
+
+  const openModal = (type) => {
+    setTrxType(type);
+    setEditingTrxId(null);
+    setFormData({ amount: '', desc: '', date: new Date().toISOString().split('T')[0], projectId: 'main', toProjectId: 'main' });
+    setIsModalOpen(true);
+  };
+
+  const handleEditTrx = (trx) => {
+    setEditingTrxId(trx.id);
+    setTrxType(trx.type);
+    setFormData({ amount: trx.amount.toString(), desc: trx.desc, date: trx.date, projectId: trx.projectId, toProjectId: trx.toProjectId || 'main' });
+    setIsModalOpen(true);
+  };
+
+  const handleDeleteTrx = (id) => {
+    if (window.confirm("Hapus transaksi manual ini?")) {
+      setTransactions(transactions.filter(t => t.id !== id));
+    }
+  };
 
   // --- KALKULASI KEUANGAN ---
   const getLastStage = (pid) => { const p = projectsList.find(x => x.id === pid); return p && p.columns ? p.columns[p.columns.length - 1] : 'Slesai'; };
@@ -54,8 +75,20 @@ export default function Finance({ tasks, projectsList, transactions, setTransact
   transactions.forEach(trx => {
     combinedMutations.push({
       id: trx.id, date: trx.date, type: trx.type, desc: trx.desc,
-      projectId: trx.projectId, toProjectId: trx.toProjectId, amount: trx.amount
+      projectId: trx.projectId, toProjectId: trx.toProjectId, amount: trx.amount,
+      isManual: true
     });
+  });
+  tasks.forEach(t => {
+    if (t.status === getLastStage(t.projectId) || t.isArchived) {
+      const amt = parseInt(String(t.fee || '0').replace(/[^0-9]/g, '')) || 0;
+      const tDate = t.id ? new Date(t.id).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+      combinedMutations.push({
+        id: t.id, date: tDate, type: t.type === 'expense' ? 'sub' : 'add',
+        desc: `[Kanban] ${t.title} (${t.client})`, projectId: t.projectId, toProjectId: null, amount: amt,
+        isManual: false
+      });
+    }
   });
   tasks.forEach(t => {
     if (t.status === getLastStage(t.projectId) || t.isArchived) {
@@ -72,9 +105,15 @@ export default function Finance({ tasks, projectsList, transactions, setTransact
   // --- HANDLER MODAL ---
   const handleTrxSubmit = (e) => {
     e.preventDefault();
-    const newTrx = { id: Date.now(), type: trxType, amount: parseInt(formData.amount.replace(/[^0-9]/g, '')), desc: formData.desc || 'Transaksi Manual', date: formData.date, projectId: formData.projectId, toProjectId: trxType === 'transfer' ? formData.toProjectId : null };
-    setTransactions([...transactions, newTrx]);
+    const amt = parseInt(String(formData.amount).replace(/[^0-9]/g, '')) || 0;
+    if (editingTrxId) {
+      setTransactions(transactions.map(t => t.id === editingTrxId ? { ...t, type: trxType, amount: amt, desc: formData.desc, date: formData.date, projectId: formData.projectId, toProjectId: trxType === 'transfer' ? formData.toProjectId : null } : t));
+    } else {
+      const newTrx = { id: Date.now(), type: trxType, amount: amt, desc: formData.desc || 'Transaksi Manual', date: formData.date, projectId: formData.projectId, toProjectId: trxType === 'transfer' ? formData.toProjectId : null };
+      setTransactions([...transactions, newTrx]);
+    }
     setIsModalOpen(false);
+    setEditingTrxId(null);
     setFormData({ amount: '', desc: '', date: new Date().toISOString().split('T')[0], projectId: 'main', toProjectId: 'main' });
   };
 
@@ -115,9 +154,9 @@ export default function Finance({ tasks, projectsList, transactions, setTransact
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }} className="no-print">
         <h1 className="page-title" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}><Wallet color="var(--sky-blue)" /> Pusat Keuangan</h1>
         <div style={{ display: 'flex', gap: '10px' }}>
-          <button onClick={() => { setTrxType('transfer'); setIsModalOpen(true); }} className="btn-secondary" style={{ display: 'flex', gap: '6px', margin: 0 }}><ArrowLeftRight size={16}/> Transfer</button>
-          <button onClick={() => { setTrxType('sub'); setIsModalOpen(true); }} className="btn-secondary" style={{ display: 'flex', gap: '6px', margin: 0, color: '#ef4444' }}><TrendingDown size={16}/> Tarik</button>
-          <button onClick={() => { setTrxType('add'); setIsModalOpen(true); }} className="btn-primary" style={{ display: 'flex', gap: '6px', margin: 0, background: '#10b981' }}><TrendingUp size={16}/> Tambah</button>
+          <button onClick={() => openModal('transfer')} className="btn-secondary" style={{ display: 'flex', gap: '6px', margin: 0 }}><ArrowLeftRight size={16}/> Transfer</button>
+          <button onClick={() => openModal('sub')} className="btn-secondary" style={{ display: 'flex', gap: '6px', margin: 0, color: '#ef4444' }}><TrendingDown size={16}/> Tarik</button>
+          <button onClick={() => openModal('add')} className="btn-primary" style={{ display: 'flex', gap: '6px', margin: 0, background: '#10b981' }}><TrendingUp size={16}/> Tambah</button>
         </div>
       </div>
 
@@ -190,6 +229,7 @@ export default function Finance({ tasks, projectsList, transactions, setTransact
                 <th style={{ padding: '10px' }}>Deskripsi</th>
                 <th style={{ padding: '10px' }}>Sumber/Tujuan</th>
                 <th style={{ padding: '10px', textAlign: 'right' }}>Nominal</th>
+                <th style={{ padding: '10px', width: '80px', textAlign: 'center' }} className="no-print">Aksi</th>
               </tr>
             </thead>
             <tbody>
@@ -211,6 +251,17 @@ export default function Finance({ tasks, projectsList, transactions, setTransact
                   </td>
                   <td style={{ padding: '12px 10px' }}>{trx.projectId === 'main' ? 'Kas Utama' : projectsList.find(p=>p.id===trx.projectId)?.name} {trx.type==='transfer' ? ` ➔ ${trx.toProjectId === 'main' ? 'Kas Utama' : projectsList.find(p=>p.id===trx.toProjectId)?.name}` : ''}</td>
                   <td style={{ padding: '12px 10px', textAlign: 'right', fontWeight: '600', color: trx.type === 'sub' ? '#ef4444' : '#10b981' }}>{trx.type === 'sub' ? '-' : '+'}Rp {trx.amount.toLocaleString('id-ID')}</td>
+                  <td style={{ padding: '12px 10px', textAlign: 'right', fontWeight: '600', color: trx.type === 'sub' ? '#ef4444' : '#10b981' }}>{trx.type === 'sub' ? '-' : '+'}Rp {trx.amount.toLocaleString('id-ID')}</td>
+                  <td style={{ padding: '12px 10px', textAlign: 'center' }} className="no-print">
+                    {trx.isManual ? (
+                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                        <button onClick={() => handleEditTrx(trx)} style={{ background: 'none', border: 'none', color: '#f59e0b', cursor: 'pointer' }}><Edit2 size={16} /></button>
+                        <button onClick={() => handleDeleteTrx(trx.id)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }}><Trash2 size={16} /></button>
+                      </div>
+                    ) : (
+                      <span style={{ fontSize: '0.7rem', color: '#94a3b8', background: '#f8fafc', padding: '2px 6px', borderRadius: '4px' }}>Kanban</span>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
